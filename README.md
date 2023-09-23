@@ -9,7 +9,7 @@ Password, user and port can be changed in docker-compose.yaml
     docker-compose up -d
 
 ### Library installation
-Set up your virtual environment, activate it, go into CGRdb directory and do:
+Set up your virtual environment, activate it, go into chythonDB directory and do:
 
     pip install -U -e .
 

@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 #
-#  Copyright 2021 Timur Gimadiev <timur.gimadiev@gmail.com>
-#  Copyright 2021 Ramil Nugmanov <nougmanoff@protonmail.com>
-#  This file is part of CGRdb.
+#  Copyright 2023 Timur Gimadiev <timur.gimadiev@gmail.com>
+#  Copyright 2023 Ramil Nugmanov <nougmanoff@protonmail.com>
+#  This file is part of chythonDB.
 #
 #  CGRdb is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU Lesser General Public License as published by
@@ -42,8 +42,8 @@ def init_cgrdb(provider='postgres', user='postgres', host='localhost', password=
                                      "number_active_bits": number_active_bits, "number_bit_pairs": number_bit_pairs})
     Config(key="lsh_num_permute", value=lsh_num_permute)
     Config(key="lsh_threshold", value=lsh_threshold)
-    # Config(key="cgr_lsh_num_permute", value=cgr_lsh_num_permute)
-    # Config(key="cgr_lsh_threshold", value=cgr_lsh_threshold)
+    Config(key="cgr_lsh_num_permute", value=cgr_lsh_num_permute)
+    Config(key="cgr_lsh_threshold", value=cgr_lsh_threshold)
     db.commit()
     db.disconnect()
     db.unbind()

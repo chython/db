@@ -26,7 +26,7 @@ from setuptools import setup, find_packages
 version = '0.0.1'
 
 setup(
-    name='CGRdb',
+    name='chythonDB',
     version=version,
     packages=find_packages(),
     url='https://github.com/TimurGimadiev/CGRdb',

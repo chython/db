@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 #
-#  Copyright 2021 Timur Gimadiev <timur.gimadiev@gmail.com>
-#  Copyright 2021 Ramil Nugmanov <nougmanoff@protonmail.com>
-#  This file is part of CGRdb.
+#  Copyright 2023 Timur Gimadiev <timur.gimadiev@gmail.com>
+#  Copyright 2023 Ramil Nugmanov <nougmanoff@protonmail.com>
+#  This file is part of chythonDB.
 #
 #  CGRdb is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU Lesser General Public License as published by

@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 #
-#  Copyright 2021 Timur Gimadiev <timur.gimadiev@gmail.com>
-#  Copyright 2021 Ramil Nugmanov <nougmanoff@protonmail.com>
-#  This file is part of CGRdb.
+#  Copyright 2023 Timur Gimadiev <timur.gimadiev@gmail.com>
+#  Copyright 2023 Ramil Nugmanov <nougmanoff@protonmail.com>
+#  This file is part of chythonDB.
 #
 #  CGRdb is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU Lesser General Public License as published by
@@ -26,7 +26,7 @@ from tqdm import tqdm
 
 from . import config, db
 from .config import Entity, Config
-from ..utils import MinHashLSH
+from ..utils import MinHashLSH, MinHashLSHEnsemble
 from uuid import uuid4
 from collections import namedtuple
 
@@ -47,6 +47,14 @@ class CGRSimilarityIndex(Entity):
     PrimaryKey(band, key)
 
 
+class MoleculeContainmentIndex(Entity):
+    partition = Required(int)
+    model = Required(int)
+    band = Required(int)
+    key = Required(int, size=64)
+    records = Required(IntArray)
+    PrimaryKey(partition, model, band, key)
+
 def fingerprintidx_create(self):
     print("creation of index for fingerprints")
     self.execute("DROP INDEX if exists idx_moleculestructure;")
@@ -60,7 +68,7 @@ def fingerprintidx_create(self):
     self.execute("CREATE INDEX idx_fingerprint_len ON moleculestructure(fingerprint_len);")
 
 
-def molecule_similatiryidx_create(self):
+def molecule_similatiry_idx_create(self):
     num_permute = config.lsh_num_permute or 64
     threshold = config.lsh_threshold or 0.7
     lsh = MinHashLSH(threshold=threshold, num_perm=num_permute, hashfunc=hash)
@@ -81,6 +89,33 @@ def molecule_similatiryidx_create(self):
             for key, value in ht._dict.items():
                 self.insert(MoleculeSimilarityIndex, band=n, key=key, records=list(value))
             self.commit()
+
+def molecule_containment_idx_create(self):
+    num_permute = config.lsh_num_permute or 64
+    threshold = config.lsh_threshold or 0.7
+    lsh = MinHashLSHEnsemble(threshold=threshold, num_perm=num_permute)
+    with db_session:
+        self.execute(f"""DELETE FROM MoleculeContainmentIndex WHERE 1=1""")
+        self.execute(f"""DELETE FROM Config c WHERE c.key='hashranges' """)
+        self.commit()
+        print("Creation of LSH")
+        tmp = []
+        for idx, fingerprint in tqdm(self.execute(f'SELECT id, fingerprint FROM MoleculeStructure')):
+            h = MinHash(num_perm=num_permute, hashfunc=hash)
+            h.update_batch(fingerprint)
+            tmp.append((idx, h, len(fingerprint)))
+        lsh.index(tmp)
+        print("Uploading LSH tables into DB")
+        hashranges = {}
+        for idx, model in lsh.indexes[0].items():
+            hashranges[idx] = model.hashranges
+        Config(key="lsh_ensemble_hashranges", value=json.dumps(hashranges))
+        for partition, i in enumerate(lsh.indexes):
+            for lsh_mod, (y, z) in enumerate(i.items()):
+                for band, g in enumerate(z.hashtables):
+                    for key, records in g._dict.items():
+                        self.insert(MoleculeContainmentIndex(partition=partition, model=lsh_mod, band=band, key=key,
+                                                             records=records))
 
 
 def cgr_similatiryidx_create(self):
@@ -154,10 +189,12 @@ class CursorHolder:
 def unbind(self):
     self.provider = self.schema = None
 
-db.create_sim_index = MethodType(molecule_similatiryidx_create, db)
+db.create_sim_index = MethodType(molecule_similatiry_idx_create, db)
+db.create_containment_index = MethodType(molecule_containment_idx_create, db)
 db.create_fing_index = MethodType(fingerprintidx_create, db)
 db.unbind = MethodType(unbind, db)
 db.create_cgr_sim_index = MethodType(cgr_similatiryidx_create, db)
 
 
-__all__ = ['MoleculeSimilarityIndex', 'molecule_similatiryidx_create', 'RequestPack', 'CursorHolder']
+__all__ = ['MoleculeSimilarityIndex', 'molecule_similatiry_idx_create', 'molecule_containment_idx_create',
+           'RequestPack', 'CursorHolder']

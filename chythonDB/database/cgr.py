@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 #
-#  Copyright 2021 Timur Gimadiev <timur.gimadiev@gmail.com>
-#  Copyright 2021 Ramil Nugmanov <nougmanoff@protonmail.com>
-#  This file is part of CGRdb.
+#  Copyright 2023 Timur Gimadiev <timur.gimadiev@gmail.com>
+#  Copyright 2023 Ramil Nugmanov <nougmanoff@protonmail.com>
+#  This file is part of chythonDB.
 #
 #  CGRdb is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU Lesser General Public License as published by
@@ -41,7 +41,7 @@ class CGR(Entity):
 
     def __init__(self, structure: ReactionContainer, /, **kwargs):
         cgr_structure = ~structure
-        fingerprint = LinearFingerprint(**config.fingerprint).transform_bitset([cgr_structure])[0]
+        fingerprint = structure.linear_bit_set(**config.fingerprint)
         super().__init__(cgrsmiles=str(cgr_structure), fingerprint=fingerprint,
                          fingerprint_len=len(fingerprint), _structure=dumps(cgr_structure), **kwargs)
 
@@ -141,7 +141,7 @@ class CGR(Entity):
         if isinstance(self, CGR):
             fingerprint = self.fingerprint
         elif isinstance(self, CGRContainer):
-            fingerprint = LinearFingerprint(**config.fingerprint).transform_bitset([self])[0]
+            fingerprint = self.linear_bit_set(**config.fingerprint)
             self = CGR
         else:
             raise ValueError(" Only CGRtools.CGRContainer or CGRdb.CGR")
@@ -187,7 +187,7 @@ class CGR(Entity):
             fingerprint = self.fingerprint
             mol = self.structure
         elif isinstance(self, CGRContainer):
-            fingerprint = LinearFingerprint(**config.fingerprint).transform_bitset([self])[0]
+            fingerprint = self.linear_bit_set(**config.fingerprint)
             mol = self
             self = CGR
         else:
