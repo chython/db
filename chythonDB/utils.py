@@ -43,56 +43,55 @@ class MinHashLSH(MinHashLSH):
 
 
 class MinHashLSHEnsemble(MinHashLSHEnsemble):
-    class MinHashLSHEnsemble(MinHashLSHEnsemble):
 
-        def __init__(
-                self,
-                threshold: float = 0.9,
-                num_perm: int = 128,
-                num_part: int = 16,
-                m: int = 8,
-                weights: Tuple[float, float] = (0.5, 0.5),
-                storage_config: Optional[Dict] = None,
-                prepickle: Optional[bool] = None,
-        ) -> None:
-            if threshold > 1.0 or threshold < 0.0:
-                raise ValueError("threshold must be in [0.0, 1.0]")
-            if num_perm < 2:
-                raise ValueError("Too few permutation functions")
-            if num_part < 1:
-                raise ValueError("num_part must be at least 1")
-            if m < 2 or m > num_perm:
-                raise ValueError("m must be in the range of [2, num_perm]")
-            if any(w < 0.0 or w > 1.0 for w in weights):
-                raise ValueError("Weight must be in [0.0, 1.0]")
-            if sum(weights) != 1.0:
-                raise ValueError("Weights must sum to 1.0")
-            self.threshold = threshold
-            self.h = num_perm
-            self.m = m
-            rs = self._init_optimal_params(weights)
-            # Initialize multiple LSH indexes for each partition
-            storage_config = {"type": "dict"} if not storage_config else storage_config
-            basename = storage_config.get("basename", _random_name(11))
-            self.indexes = [
-                dict(
-                    (
-                        r,
-                        MinHashLSH(
-                            num_perm=self.h,
-                            params=(int(self.h / r), r),
-                            storage_config=self._get_storage_config(
-                                basename, storage_config, partition, r
-                            ),
-                            prepickle=prepickle,
+    def __init__(
+            self,
+            threshold: float = 0.9,
+            num_perm: int = 128,
+            num_part: int = 16,
+            m: int = 8,
+            weights: Tuple[float, float] = (0.5, 0.5),
+            storage_config: Optional[Dict] = None,
+            prepickle: Optional[bool] = None,
+    ) -> None:
+        if threshold > 1.0 or threshold < 0.0:
+            raise ValueError("threshold must be in [0.0, 1.0]")
+        if num_perm < 2:
+            raise ValueError("Too few permutation functions")
+        if num_part < 1:
+            raise ValueError("num_part must be at least 1")
+        if m < 2 or m > num_perm:
+            raise ValueError("m must be in the range of [2, num_perm]")
+        if any(w < 0.0 or w > 1.0 for w in weights):
+            raise ValueError("Weight must be in [0.0, 1.0]")
+        if sum(weights) != 1.0:
+            raise ValueError("Weights must sum to 1.0")
+        self.threshold = threshold
+        self.h = num_perm
+        self.m = m
+        rs = self._init_optimal_params(weights)
+        # Initialize multiple LSH indexes for each partition
+        storage_config = {"type": "dict"} if not storage_config else storage_config
+        basename = storage_config.get("basename", _random_name(11))
+        self.indexes = [
+            dict(
+                (
+                    r,
+                    MinHashLSH(
+                        num_perm=self.h,
+                        params=(int(self.h / r), r),
+                        storage_config=self._get_storage_config(
+                            basename, storage_config, partition, r
                         ),
-                    )
-                    for r in rs
+                        prepickle=prepickle,
+                    ),
                 )
-                for partition in range(0, num_part)
-            ]
-            self.lowers = [None for _ in self.indexes]
-            self.uppers = [None for _ in self.indexes]
+                for r in rs
+            )
+            for partition in range(0, num_part)
+        ]
+        self.lowers = [None for _ in self.indexes]
+        self.uppers = [None for _ in self.indexes]
 
 
 __all__ = ['validate_molecule', 'MinHashLSH']

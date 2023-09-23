@@ -21,7 +21,7 @@ import json
 from types import MethodType
 from datasketch import MinHash
 from datasketch.lsh import _optimal_param
-from pony.orm import Required, PrimaryKey, IntArray, db_session, select
+from pony.orm import Required, PrimaryKey, IntArray, db_session, select, Numeric
 from tqdm import tqdm
 
 from . import config, db
@@ -42,7 +42,7 @@ class MoleculeSimilarityIndex(Entity):
 
 class CGRSimilarityIndex(Entity):
     band = Required(int)
-    key = Required(int, size=64)
+    key = Required(num)
     records = Required(IntArray)
     PrimaryKey(band, key)
 
@@ -51,7 +51,7 @@ class MoleculeContainmentIndex(Entity):
     partition = Required(int)
     model = Required(int)
     band = Required(int)
-    key = Required(int, size=64)
+    key = Required(int, size=512)
     records = Required(IntArray)
     PrimaryKey(partition, model, band, key)
 
@@ -90,6 +90,7 @@ def molecule_similatiry_idx_create(self):
                 self.insert(MoleculeSimilarityIndex, band=n, key=key, records=list(value))
             self.commit()
 
+
 def molecule_containment_idx_create(self):
     num_permute = config.lsh_num_permute or 64
     threshold = config.lsh_threshold or 0.7
@@ -108,7 +109,7 @@ def molecule_containment_idx_create(self):
         print("Uploading LSH tables into DB")
         hashranges = {}
         for idx, model in lsh.indexes[0].items():
-            hashranges[idx] = model.hashranges
+            hashranges[int(idx)] = [(int(x), int(y)) for x, y in model.hashranges]
         Config(key="lsh_ensemble_hashranges", value=json.dumps(hashranges))
         for partition, i in enumerate(lsh.indexes):
             for lsh_mod, (y, z) in enumerate(i.items()):
